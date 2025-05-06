@@ -1,13 +1,12 @@
+import os
 import logging
 from typing import Iterable
 from aiohttp import web
 from fileroutes import add_file_routes
 from protocol import *
-from configparser import ConfigParser
-import json, asyncio, atexit
+import json, asyncio
 from datetime import datetime, timezone
 
-config : ConfigParser = ...
 CHANNELS : list[tuple[str,str]] = []
 CHANNEL_HISTORY : dict[str,list[MessageInfo]] = {}
 CONNECTIONS : dict[web.WebSocketResponse,tuple[str,str,set[str]]] = {}
@@ -266,12 +265,8 @@ async def main_page(request):
     pass
 
 def main():
-    global config
-    config = ConfigParser()
-    config.read("config.cfg")
-
     # Load in channels
-    with open(config["others"]["channels_loc"]) as file:
+    with open(os.getenv("channels_file")) as file:
         channel_names = json.load(file)
         for cname in channel_names:
             cid = generate_snowflake()
@@ -280,30 +275,19 @@ def main():
             pass
         pass
     ## Check for formatting
-    assert isinstance(CHANNELS,list), RuntimeError(f"{config['others']['channels_loc']} does not contain JSONArray")
+    assert isinstance(CHANNELS,list), RuntimeError(f"{os.getenv("channels_file")} does not contain JSONArray")
     for i, c in enumerate(CHANNELS):
         assert isinstance(c[1],str), f"Malformated channel {i}: {c}"
         pass
 
     # Auto add routes in remote_files
-    add_file_routes(routes,config["net"]["remote_files_loc"],leave_out_top=True)
+    add_file_routes(routes,"remote_files",leave_out_top=True)
 
     # Launch app
     app = web.Application()
     app.add_routes(routes)
 
-    web.run_app(app, host=config["net"]["IP_MASK"],port=int(config["net"]["PORT"]))
-    pass
-
-@atexit.register
-def exit_save():
-    with open("config.cfg","w") as file:
-        config.write(file,True)
-        pass
-
-    with open(config["others"]["channels_loc"],"w") as file:
-        json.dump([cname for cid, cname in CHANNELS],file)
-        pass
+    web.run_app(app, host="0.0.0.0",port=8080)
     pass
 
 if __name__ == "__main__":

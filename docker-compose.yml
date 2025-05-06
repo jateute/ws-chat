@@ -1,0 +1,9 @@
+services:
+  ws-chat:
+    build: .
+    container_name: ws-chat
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/home/ws-chat/src/config

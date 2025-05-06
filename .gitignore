@@ -1,9 +1,10 @@
-# Vscode & Python dump folders
+# Vscode, PyCharm & Python dump folders
 __pycache__/
 .vscode/
+.idea/
 
 # Venv
 venv/
 
 # Private files for program
-/channels.json
+config/
